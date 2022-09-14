@@ -1,12 +1,10 @@
 # Linux 交叉编译 Android 库脚本
-NDK=$NDK
-
-if [[ -z $NDK ]]; then
-    echo 'Error: Can not find NDK path.'
+if [[ -z $ANDROID_NDK ]]; then
+    echo 'Error: Can not find ANDROID_NDK path.'
     exit 1
 fi
 
-echo "NDK path: ${NDK}"
+echo "ANDROID_NDK path: ${ANDROID_NDK}"
 
 OUTPUT_DIR="_output_"
 
@@ -16,7 +14,7 @@ mkdir ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
 OUTPUT_PATH=`pwd`
 
 API=21
-TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+TOOLCHAIN=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64
 
 function build {
     ABI=$1
@@ -36,12 +34,15 @@ function build {
 
     echo "Build ABI ${ABI}..."
 
-    PREFIX=${OUTPUT_PATH}/android/$ABI
+    rm -rf ${ABI}
+    mkdir ${ABI} && cd ${ABI}
+
+    PREFIX=${OUTPUT_PATH}/product/$ABI
 
     export CC=$TOOLCHAIN/bin/${TRIPLE}${API}-clang
     export CFLAGS="-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -O0 -DNDEBUG  -fPIC --gcc-toolchain=$TOOLCHAIN --target=${TRIPLE}${API}"
 
-    ../configure \
+    ../../configure \
         --host=${TRIPLE} \
         --prefix=$PREFIX \
         --enable-static \
@@ -50,7 +51,9 @@ function build {
         --disable-lavf \
         --sysroot=$TOOLCHAIN/sysroot
 
-    make -j2 && make install
+    make clean && make -j`nproc` && make install
+
+    cd ..
 }
 
 build armeabi-v7a
