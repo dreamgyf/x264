@@ -8,8 +8,8 @@ echo "ANDROID_NDK path: ${ANDROID_NDK}"
 
 OUTPUT_DIR="_output_"
 
-rm -rf ${OUTPUT_DIR}
-mkdir ${OUTPUT_DIR} && cd ${OUTPUT_DIR}
+mkdir ${OUTPUT_DIR}
+cd ${OUTPUT_DIR}
 
 OUTPUT_PATH=`pwd`
 
@@ -20,13 +20,21 @@ function build {
     ABI=$1
 
     if [[ $ABI == "armeabi-v7a" ]]; then
+        ARCH="arm"
         TRIPLE="armv7a-linux-androideabi"
+        CROSS_PREFIX="arm-linux-androideabi-"
     elif [[ $ABI == "arm64-v8a" ]]; then
+        ARCH="arm64"
         TRIPLE="aarch64-linux-android"
-    elif [[ $ABI == "arm64-v8a" ]]; then
-        TRIPLE="x86"
+        CROSS_PREFIX="aarch64-linux-android-"
+    elif [[ $ABI == "x86" ]]; then
+        ARCH="x86"
+        TRIPLE="i686-linux-android"
+        CROSS_PREFIX="i686-linux-android-"
     elif [[ $ABI == "x86-64" ]]; then
+        ARCH="x86_64"
         TRIPLE="x86_64-linux-android"
+        CROSS_PREFIX="x86_64-linux-android-"
     else
         echo "Unsupported ABI ${ABI}!"
         exit 1
@@ -56,5 +64,9 @@ function build {
     cd ..
 }
 
-build armeabi-v7a
-build arm64-v8a
+echo "Select arch:"
+select arch in "armeabi-v7a" "arm64-v8a" "x86" "x86-64"
+do
+    build $arch
+    break
+done
